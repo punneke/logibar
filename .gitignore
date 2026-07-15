@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Local reference clones (e.g. logitray source we ported from)
+reference/
+
+# Claude Code local state
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
