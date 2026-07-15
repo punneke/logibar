@@ -58,6 +58,10 @@ pub fn run() {
         .try_init();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .setup(|app| {
             let window = app.get_webview_window("widget").unwrap();
             if let Some(monitor) = window.current_monitor()? {

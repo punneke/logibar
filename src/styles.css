@@ -9,6 +9,15 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+body {
+  height: 100vh;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
 #widget {
   padding: 8px 12px;
   background: rgba(20, 20, 20, 0.55);
@@ -38,4 +47,48 @@ html, body {
 
 .pct.low {
   color: #ff6b6b;
+}
+
+#context-menu {
+  position: fixed;
+  min-width: 180px;
+  background: rgba(30, 30, 30, 0.98);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+}
+
+#context-menu.hidden {
+  display: none;
+}
+
+.menu-item {
+  padding: 6px 12px;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #eee;
+}
+
+.menu-item:hover {
+  background: rgba(80, 130, 220, 0.6);
+  color: #fff;
+}
+
+.menu-check {
+  width: 14px;
+  display: inline-block;
+  text-align: center;
+  opacity: 0.9;
+}
+
+.menu-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 4px 0;
 }

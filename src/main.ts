@@ -1,6 +1,9 @@
 import { listen } from "@tauri-apps/api/event";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { enable, disable, isEnabled } from "@tauri-apps/plugin-autostart";
 
 type BatteryUpdate = {
+  device_key: string;
   device_kind: "keyboard" | "mouse" | "other";
   name: string;
   percentage: number | null;
@@ -33,6 +36,78 @@ function render(update: BatteryUpdate) {
   }
 }
 
+async function refreshAutostartCheck() {
+  const check = document.querySelector<HTMLSpanElement>(
+    '.menu-item[data-action="toggle-autostart"] .menu-check',
+  );
+  if (!check) return;
+  try {
+    check.textContent = (await isEnabled()) ? "☑" : "☐";
+  } catch (err) {
+    console.warn("isEnabled failed", err);
+  }
+}
+
+function positionMenu(menu: HTMLElement, x: number, y: number) {
+  menu.classList.remove("hidden");
+  const rect = menu.getBoundingClientRect();
+  const maxX = window.innerWidth - rect.width - 4;
+  const maxY = window.innerHeight - rect.height - 4;
+  menu.style.left = `${Math.max(4, Math.min(x, maxX))}px`;
+  menu.style.top = `${Math.max(4, Math.min(y, maxY))}px`;
+}
+
+function hideMenu() {
+  document.getElementById("context-menu")?.classList.add("hidden");
+}
+
+async function handleMenuClick(action: string) {
+  hideMenu();
+  switch (action) {
+    case "toggle-autostart":
+      try {
+        if (await isEnabled()) {
+          await disable();
+        } else {
+          await enable();
+        }
+        await refreshAutostartCheck();
+      } catch (err) {
+        console.warn("autostart toggle failed", err);
+      }
+      break;
+    case "manage-devices":
+      // TODO: opens settings window in the next commit.
+      console.log("manage devices — not implemented yet");
+      break;
+    case "quit":
+      await getCurrentWindow().close();
+      break;
+  }
+}
+
 window.addEventListener("DOMContentLoaded", () => {
   listen<BatteryUpdate>("battery-update", (event) => render(event.payload));
+
+  const menu = document.getElementById("context-menu")!;
+
+  document.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    void refreshAutostartCheck();
+    positionMenu(menu, e.clientX, e.clientY);
+  });
+
+  document.addEventListener("click", (e) => {
+    const item = (e.target as HTMLElement).closest<HTMLElement>(".menu-item");
+    if (item && menu.contains(item)) {
+      const action = item.dataset.action;
+      if (action) void handleMenuClick(action);
+      return;
+    }
+    if (!menu.classList.contains("hidden")) hideMenu();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") hideMenu();
+  });
 });

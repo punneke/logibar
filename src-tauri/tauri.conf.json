@@ -15,8 +15,8 @@
       {
         "label": "widget",
         "title": "logibar",
-        "width": 220,
-        "height": 80,
+        "width": 260,
+        "height": 240,
         "decorations": false,
         "transparent": true,
         "alwaysOnBottom": true,
