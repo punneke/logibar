@@ -1,0 +1,41 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+  font-family: "Segoe UI", Inter, sans-serif;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+
+#widget {
+  padding: 8px 12px;
+  background: rgba(20, 20, 20, 0.55);
+  backdrop-filter: blur(8px);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.device {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.label {
+  opacity: 0.8;
+}
+
+.pct {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.pct.low {
+  color: #ff6b6b;
+}
