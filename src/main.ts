@@ -1,39 +1,41 @@
-import { listen } from "@tauri-apps/api/event";
+import { listen, emit } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { invoke } from "@tauri-apps/api/core";
 import { enable, disable, isEnabled } from "@tauri-apps/plugin-autostart";
 
-type BatteryUpdate = {
-  device_key: string;
-  device_kind: "keyboard" | "mouse" | "other";
-  name: string;
-  percentage: number | null;
-  charging: boolean;
-};
+import {
+  BatteryUpdate,
+  DetectedDevice,
+  TrackedDevice,
+  loadTracked,
+  escapeHtml,
+} from "./shared";
 
-function render(update: BatteryUpdate) {
-  const selector =
-    update.device_kind === "keyboard"
-      ? "#device-keyboard"
-      : update.device_kind === "mouse"
-      ? "#device-mouse"
-      : null;
-  if (!selector) return;
+const detected = new Map<string, DetectedDevice>();
+let tracked: TrackedDevice[] = [];
 
-  const el = document.querySelector(selector);
-  if (!el) return;
-
-  const pctEl = el.querySelector(".pct");
-  const labelEl = el.querySelector(".label");
-  if (!pctEl || !labelEl) return;
-
-  labelEl.textContent = update.name;
-  if (update.percentage == null) {
-    pctEl.textContent = "--%";
-    pctEl.classList.remove("low");
-  } else {
-    pctEl.textContent = `${update.percentage}%${update.charging ? " ⚡" : ""}`;
-    pctEl.classList.toggle("low", update.percentage <= 20);
+function render() {
+  const widget = document.getElementById("widget")!;
+  if (tracked.length === 0) {
+    widget.innerHTML = `<div class="empty">No devices tracked.<br><span class="hint">Right-click for options.</span></div>`;
+    return;
   }
+  widget.innerHTML = tracked
+    .map((t) => {
+      const d = detected.get(t.device_key);
+      const name = t.custom_name ?? d?.name ?? t.device_key;
+      const pct = d?.percentage;
+      const low = pct != null && pct <= 20 ? " low" : "";
+      const bolt = d?.charging ? " ⚡" : "";
+      const pctText = pct != null ? `${pct}%${bolt}` : "--%";
+      return `
+        <div class="device" data-key="${escapeHtml(t.device_key)}">
+          <span class="label">${escapeHtml(name)}</span>
+          <span class="pct${low}">${pctText}</span>
+        </div>
+      `;
+    })
+    .join("");
 }
 
 async function refreshAutostartCheck() {
@@ -61,6 +63,14 @@ function hideMenu() {
   document.getElementById("context-menu")?.classList.add("hidden");
 }
 
+async function openSettings() {
+  try {
+    await invoke("open_settings");
+  } catch (err) {
+    console.error("open_settings failed:", err);
+  }
+}
+
 async function handleMenuClick(action: string) {
   hideMenu();
   switch (action) {
@@ -77,8 +87,7 @@ async function handleMenuClick(action: string) {
       }
       break;
     case "manage-devices":
-      // TODO: opens settings window in the next commit.
-      console.log("manage devices — not implemented yet");
+      await openSettings();
       break;
     case "quit":
       await getCurrentWindow().close();
@@ -86,8 +95,33 @@ async function handleMenuClick(action: string) {
   }
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  listen<BatteryUpdate>("battery-update", (event) => render(event.payload));
+async function init() {
+  tracked = await loadTracked();
+  render();
+
+  await listen<BatteryUpdate>("battery-update", (event) => {
+    const u = event.payload;
+    detected.set(u.device_key, {
+      device_key: u.device_key,
+      name: u.name,
+      kind: u.device_kind,
+      percentage: u.percentage,
+      charging: u.charging,
+    });
+    // Rebroadcast to any settings window that's open.
+    void emit("detected-changed", Array.from(detected.values()));
+    render();
+  });
+
+  await listen("tracked-changed", async () => {
+    tracked = await loadTracked();
+    render();
+  });
+
+  // Answer "give me the current detected list" requests from other windows.
+  await listen("request-detected", () => {
+    void emit("detected-changed", Array.from(detected.values()));
+  });
 
   const menu = document.getElementById("context-menu")!;
 
@@ -110,4 +144,8 @@ window.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") hideMenu();
   });
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  void init();
 });

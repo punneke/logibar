@@ -25,6 +25,16 @@
         "shadow": false,
         "focus": false,
         "visible": true
+      },
+      {
+        "label": "settings",
+        "url": "settings.html",
+        "title": "logibar — Settings",
+        "width": 420,
+        "height": 520,
+        "resizable": true,
+        "visible": false,
+        "skipTaskbar": false
       }
     ],
     "security": {

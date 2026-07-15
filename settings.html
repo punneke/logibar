@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/src/settings.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>logibar — Settings</title>
+    <script type="module" src="/src/settings.ts" defer></script>
+  </head>
+  <body>
+    <main>
+      <h1>Tracked devices</h1>
+      <p class="hint">
+        These devices appear in the widget, in this order.
+      </p>
+      <div id="tracked-list"></div>
+      <div id="empty-tracked" class="empty hidden">
+        No devices tracked yet.
+      </div>
+
+      <h2>Add a device</h2>
+      <div class="add-row">
+        <select id="add-select">
+          <option value="">Select a detected device…</option>
+        </select>
+        <button id="add-btn" type="button" disabled>Add</button>
+      </div>
+      <p id="add-hint" class="hint">
+        Waiting for battery updates… make sure your devices are turned on.
+      </p>
+    </main>
+  </body>
+</html>
